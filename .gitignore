@@ -1,3 +1,5 @@
-/target
-Cargo.lock
-site.html
+backend/target
+backend/Cargo.lock
+backend/site.html
+frontend/target/
+frontend/Cargo.lock
