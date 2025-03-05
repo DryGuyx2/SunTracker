@@ -54,7 +54,11 @@ async fn get_timestamp(State(state): State<AppState>, Path((month, day)): Path<(
         Err(_) => return String::from("None"),
     };
 
-    let target_date: Date = Date::new(month, parsed_day).unwrap();
+    let target_date: Date = match Date::new(month, parsed_day) {
+        Ok(d) => d,
+        Err(_) => return String::from("None"),
+    };
+
     match state.get_sunset(&target_date) {
         Some(t) => t.to_string(),
         None => String::from("None"),
