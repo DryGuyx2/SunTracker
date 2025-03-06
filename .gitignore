@@ -3,3 +3,4 @@ backend/Cargo.lock
 backend/site.html
 frontend/target/
 frontend/Cargo.lock
+frontend/dist/

@@ -1,3 +1,10 @@
+use yew::prelude::*;
+
+#[function_component]
+fn App() -> Html {
+    html! { "hello world" }
+}
+
 fn main() {
-    println!("Hello, world!");
+    yew::Renderer::<App>::new().render();
 }
