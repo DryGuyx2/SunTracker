@@ -1,14 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+  <head>
+    <title>SunTracker</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+  </head>
+  <body x-data="{day: 0, month: 'january'}">
+  
+    <label for="month_selection">Month:</label>
+        <select name="month_selection" id="month_selection" x-model="month">
+          <option value="january">Jan.</option>
+          <option value="february">Feb.</option>
+          <option value="march">Mar.</option>
+          <option value="april">Apr.</option>
+          <option value="may">May</option>
+          <option value="june">June</option>
+          <option value="july">July</option>
+          <option value="august">Aug.</option>
+          <option value="september">Sept.</option>
+          <option value="october">Oct.</option>
+          <option value="november">Nov.</option>
+          <option value="december">Dec</option>
+        </select>
 
-<head>
-  <meta charset="utf-8" />
-  <title>SunTracker</title>
-  <link data-trunk rel="scss" href="index.scss"/>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@900&display=swap" rel="stylesheet">
-  <link data-trunk rel="rust" />
-</head>
+    <label for="day_input">Day:</label>
+    <input type="number" id="day_input" name="day_input" min="1" max="31" x-model="day">
 
-<body></body>
-
+    <button
+      id="time-btn"
+      :hx-get="`api/${month}/${day}`"
+      x-effect="day; htmx.process($el)"
+      hx-target="#time"
+    >
+      Get Time
+    </button>
+    <div id="time"></div>
+  </body>
 </html>
+

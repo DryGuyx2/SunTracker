@@ -1,9 +1,11 @@
 use core::fmt;
 use regex::Regex;
 use std::collections::HashMap;
-use std::fmt::{write, Display};
+use std::fmt::Display;
 use std::hash::Hash;
 use table_extract::Table;
+
+use lazy_static::lazy_static;
 
 /*
 pub async fn fetch_site() -> Result<String, reqwest::Error> {
@@ -41,11 +43,13 @@ pub enum Month {
 }
 
 #[derive(Debug)]
-pub struct MonthParseError {}
+pub struct MonthParseError {
+    string: String,
+}
 
 impl Display for MonthParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Invalid string name {} for Month", self)
+        write!(f, "Invalid string name {} for Month", self.string)
     }
 }
 
@@ -54,23 +58,34 @@ impl std::error::Error for MonthParseError {}
 impl TryInto<Month> for String {
     type Error = MonthParseError;
     fn try_into(self) -> Result<Month, Self::Error> {
-        match self.as_str() {
-            "Jan" => Ok(Month::January),
-            "Feb" => Ok(Month::February),
-            "Mar" => Ok(Month::March),
-            "Apr" => Ok(Month::April),
-            "Mai" => Ok(Month::May),
-            "Juni" => Ok(Month::June),
-            "Juli" => Ok(Month::July),
-            "Aug" => Ok(Month::August),
-            "Sep" => Ok(Month::September),
-            "Okt" => Ok(Month::October),
-            "Nov" => Ok(Month::November),
-            "Des" => Ok(Month::December),
-            &_ => Err(Self::Error {}),
+        match self.as_str().trim() {
+            "Jan" | "january" => Ok(Month::January),
+            "Feb" | "february" => Ok(Month::February),
+            "Mar" | "march" => Ok(Month::March),
+            "Apr" | "april" => Ok(Month::April),
+            "Mai" | "may" => Ok(Month::May),
+            "Juni" | "june" => Ok(Month::June),
+            "Juli" | "july" => Ok(Month::July),
+            "Aug" | "august" => Ok(Month::August),
+            "Sep" | "september" => Ok(Month::September),
+            "Okt" | "october" => Ok(Month::October),
+            "Nov" | "november" => Ok(Month::November),
+            "Des" | "december" => Ok(Month::December),
+            &_ => Err(Self::Error { string: self }),
         }
     }
 }
+
+#[derive(Debug)]
+pub struct DayRangeError {}
+
+impl Display for DayRangeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Input number not in range of days in month")
+    }
+}
+
+impl std::error::Error for DayRangeError {}
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct TimeStamp {
@@ -89,6 +104,40 @@ impl Display for TimeStamp {
     }
 }
 
+lazy_static! {
+    static ref MONTH_LENGTH_MAP: HashMap<Month, u8> = {
+        let mut month_length_map: HashMap<Month, u8> = HashMap::new();
+        month_length_map.insert(Month::January, 31);
+        month_length_map.insert(Month::February, 28);
+        month_length_map.insert(Month::March, 31);
+        month_length_map.insert(Month::April, 30);
+        month_length_map.insert(Month::May, 31);
+        month_length_map.insert(Month::June, 30);
+        month_length_map.insert(Month::July, 31);
+        month_length_map.insert(Month::August, 31);
+        month_length_map.insert(Month::September, 30);
+        month_length_map.insert(Month::October, 31);
+        month_length_map.insert(Month::November, 30);
+        month_length_map.insert(Month::December, 31);
+
+        month_length_map
+    };
+}
+
+#[derive(Debug)]
+pub enum DateParseError {
+    DayRangeError(DayRangeError),
+    MonthParseError(MonthParseError),
+}
+
+impl Display for DateParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::DayRangeError(e) => write!(f, "{}", e),
+            Self::MonthParseError(e) => write!(f, "{}", e),
+        }
+    }
+}
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub struct Date {
@@ -97,9 +146,17 @@ pub struct Date {
 }
 
 impl Date {
-    pub fn new(month: String, day: u8) -> Result<Date, MonthParseError> {
+    pub fn new(month: String, day: u8) -> Result<Date, DateParseError> {
+        let parsed_month: Month = match month.try_into() {
+            Ok(m) => m,
+            Err(e) => return Err(DateParseError::MonthParseError(e)),
+        };
+        if &day > MONTH_LENGTH_MAP.get(&parsed_month).unwrap() || day < 1 {
+            return Err(DateParseError::DayRangeError(DayRangeError {}));
+        }
+
         Ok(Date {
-            month: month.try_into()?,
+            month: parsed_month,
             day,
         })
     }
